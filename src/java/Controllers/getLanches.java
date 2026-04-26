@@ -45,7 +45,7 @@ public class getLanches extends HttpServlet {
         
         try{
         Cookie[] cookies = request.getCookies();
-        ValidadorCookie validar = new ValidadorCookie();
+        ValidadorCookie validar = criarValidadorCookie();
         
         resultado = validar.validarFuncionario(cookies);
         }catch(java.lang.NullPointerException e){System.out.println(e);}
@@ -53,7 +53,7 @@ public class getLanches extends HttpServlet {
         
         if(resultado){
             
-            DaoLanche lancheDAO = new DaoLanche();
+            DaoLanche lancheDAO = criarDaoLanche();
 
             List<Lanche> lanches = lancheDAO.listarTodos();
 
@@ -69,6 +69,15 @@ public class getLanches extends HttpServlet {
             out.println("erro");
             }
         }
+    }
+
+    // Criei esses métodos para facilitar o uso de mock nos testes
+    protected ValidadorCookie criarValidadorCookie() {
+        return new ValidadorCookie();
+    }
+
+    protected DaoLanche criarDaoLanche() {
+        return new DaoLanche();
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">

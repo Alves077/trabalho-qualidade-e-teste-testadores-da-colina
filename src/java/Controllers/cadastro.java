@@ -80,7 +80,7 @@ public class cadastro extends HttpServlet {
             //E Para finalizar, salva no Banco usando o DAO deles
             cliente.setEndereco(endereco);
             
-            DaoCliente clienteDAO = new DaoCliente();
+            DaoCliente clienteDAO = criarDaoCliente();
             clienteDAO.salvar(cliente);
             
         }
@@ -93,6 +93,11 @@ public class cadastro extends HttpServlet {
             out.println("Usuário Cadastrado!");
 
         }
+    }
+
+    // Criei esse método para facilitar o uso de mock nos testes
+    protected DaoCliente criarDaoCliente() {
+        return new DaoCliente();
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
