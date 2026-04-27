@@ -9,19 +9,22 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LoginFuncionarioTest {
@@ -40,6 +43,16 @@ public class LoginFuncionarioTest {
         protected DaoToken criarDaoToken() { return daoTokenMock; }
     }
 
+    private ServletInputStream toServletInputStream(String json) {
+        ByteArrayInputStream bais = new ByteArrayInputStream(json.getBytes());
+        return new ServletInputStream() {
+            @Override public int read() throws IOException { return bais.read(); }
+            @Override public boolean isFinished() { return bais.available() == 0; }
+            @Override public boolean isReady() { return true; }
+            @Override public void setReadListener(ReadListener listener) {}
+        };
+    }
+
     @Before
     public void configurar() throws Exception {
         respostaHttp = new StringWriter();
@@ -48,9 +61,7 @@ public class LoginFuncionarioTest {
 
     private void configurarCorpoRequisicao(String usuario, String senha) throws Exception {
         String json = "{\"usuario\":\"" + usuario + "\",\"senha\":\"" + senha + "\"}";
-        when(request.getInputStream()).thenReturn(new ByteArrayInputStream(json.getBytes()) {
-            public int read(byte[] b, int off, int len) { return super.read(b, off, len); }
-        });
+        when(request.getInputStream()).thenReturn(toServletInputStream(json));
     }
 
     @Test
