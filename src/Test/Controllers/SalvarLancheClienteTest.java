@@ -11,9 +11,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -32,9 +36,42 @@ public class SalvarLancheClienteTest {
     private StringWriter respostaHttp;
 
     private class SalvarLancheTestavel extends salvarLancheCliente {
-        protected ValidadorCookie criarValidadorCookie(){ return validadorMock; }
-        protected DaoIngrediente criarDaoIngrediente(){ return daoIngredienteMock; }
-        protected DaoLanche criarDaoLanche(){ return daoLancheMock; }
+        protected ValidadorCookie criarValidadorCookie() {
+            return validadorMock;
+        }
+
+        protected DaoIngrediente criarDaoIngrediente() {
+            return daoIngredienteMock;
+        }
+
+        protected DaoLanche criarDaoLanche() {
+            return daoLancheMock;
+        }
+    }
+
+    private ServletInputStream criarInput(String json) {
+        ByteArrayInputStream entrada = new ByteArrayInputStream(json.getBytes());
+
+        return new ServletInputStream() {
+            @Override
+            public int read() throws IOException {
+                return entrada.read();
+            }
+
+            @Override
+            public boolean isFinished() {
+                return entrada.available() == 0;
+            }
+
+            @Override
+            public boolean isReady() {
+                return true;
+            }
+
+            @Override
+            public void setReadListener(ReadListener listener) {
+            }
+        };
     }
 
     @Before
@@ -48,7 +85,7 @@ public class SalvarLancheClienteTest {
         Cookie[] cookies = { new Cookie("token", "x") };
 
         when(request.getCookies()).thenReturn(cookies);
-        when(request.getInputStream()).thenReturn(new ServletInputStreamFake(""));
+        when(request.getInputStream()).thenReturn(criarInput(""));
         when(validadorMock.validar(cookies)).thenReturn(false);
 
         new SalvarLancheTestavel().processRequest(request, response);
@@ -63,19 +100,21 @@ public class SalvarLancheClienteTest {
         String json = "{\"nome\":\"X\",\"descricao\":\"Teste\",\"ingredientes\":{\"Queijo\":1}}";
 
         when(request.getCookies()).thenReturn(cookies);
-        when(request.getInputStream()).thenReturn(new ServletInputStreamFake(json));
+        when(request.getInputStream()).thenReturn(criarInput(json));
         when(validadorMock.validar(cookies)).thenReturn(true);
 
-        Ingrediente i = new Ingrediente();
-        i.setValor_venda(5.0);
+        Ingrediente ingrediente = new Ingrediente();
+        ingrediente.setValor_venda(5.0);
 
-        when(daoIngredienteMock.pesquisaPorNome(org.mockito.ArgumentMatchers.any())).thenReturn(i);
+        when(daoIngredienteMock.pesquisaPorNome(org.mockito.ArgumentMatchers.any(Ingrediente.class)))
+                .thenReturn(ingrediente);
 
-        Lanche l = new Lanche();
-        l.setNome("X");
-        l.setValor_venda(5.0);
+        Lanche lanche = new Lanche();
+        lanche.setNome("X");
+        lanche.setValor_venda(5.0);
 
-        when(daoLancheMock.pesquisaPorNome(org.mockito.ArgumentMatchers.any())).thenReturn(l);
+        when(daoLancheMock.pesquisaPorNome(org.mockito.ArgumentMatchers.any(Lanche.class)))
+                .thenReturn(lanche);
 
         new SalvarLancheTestavel().processRequest(request, response);
 

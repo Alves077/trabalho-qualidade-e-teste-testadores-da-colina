@@ -8,9 +8,13 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -28,8 +32,38 @@ public class SalvarIngredienteTest {
     private StringWriter respostaHttp;
 
     private class SalvarIngredienteTestavel extends salvarIngrediente {
-        protected ValidadorCookie criarValidadorCookie(){ return validadorMock; }
-        protected DaoIngrediente criarDaoIngrediente(){ return daoIngredienteMock; }
+        protected ValidadorCookie criarValidadorCookie() {
+            return validadorMock;
+        }
+
+        protected DaoIngrediente criarDaoIngrediente() {
+            return daoIngredienteMock;
+        }
+    }
+
+    private ServletInputStream criarInput(String json) {
+        ByteArrayInputStream entrada = new ByteArrayInputStream(json.getBytes());
+
+        return new ServletInputStream() {
+            @Override
+            public int read() throws IOException {
+                return entrada.read();
+            }
+
+            @Override
+            public boolean isFinished() {
+                return entrada.available() == 0;
+            }
+
+            @Override
+            public boolean isReady() {
+                return true;
+            }
+
+            @Override
+            public void setReadListener(ReadListener listener) {
+            }
+        };
     }
 
     @Before
@@ -43,7 +77,7 @@ public class SalvarIngredienteTest {
         Cookie[] cookies = { new Cookie("tokenFuncionario", "x") };
 
         when(request.getCookies()).thenReturn(cookies);
-        when(request.getInputStream()).thenReturn(new ServletInputStreamFake(""));
+        when(request.getInputStream()).thenReturn(criarInput(""));
         when(validadorMock.validarFuncionario(cookies)).thenReturn(false);
 
         new SalvarIngredienteTestavel().processRequest(request, response);
@@ -58,7 +92,7 @@ public class SalvarIngredienteTest {
         String json = "{\"nome\":\"Queijo\",\"descricao\":\"Teste\",\"quantidade\":10,\"ValorCompra\":2,\"ValorVenda\":5,\"tipo\":\"extra\"}";
 
         when(request.getCookies()).thenReturn(cookies);
-        when(request.getInputStream()).thenReturn(new ServletInputStreamFake(json));
+        when(request.getInputStream()).thenReturn(criarInput(json));
         when(validadorMock.validarFuncionario(cookies)).thenReturn(true);
 
         new SalvarIngredienteTestavel().processRequest(request, response);
