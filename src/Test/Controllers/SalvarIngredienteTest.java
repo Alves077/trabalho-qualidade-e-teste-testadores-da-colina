@@ -1,0 +1,68 @@
+package Controllers;
+
+import DAO.DaoIngrediente;
+import Helpers.ValidadorCookie;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
+public class SalvarIngredienteTest {
+
+    @Mock private ValidadorCookie validadorMock;
+    @Mock private DaoIngrediente daoIngredienteMock;
+    @Mock private HttpServletRequest request;
+    @Mock private HttpServletResponse response;
+
+    private StringWriter respostaHttp;
+
+    private class SalvarIngredienteTestavel extends salvarIngrediente {
+        protected ValidadorCookie criarValidadorCookie(){ return validadorMock; }
+        protected DaoIngrediente criarDaoIngrediente(){ return daoIngredienteMock; }
+    }
+
+    @Before
+    public void configurar() throws Exception {
+        respostaHttp = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(respostaHttp));
+    }
+
+    @Test
+    public void cookieInvalidoDeveRetornarErro() throws Exception {
+        Cookie[] cookies = { new Cookie("tokenFuncionario", "x") };
+
+        when(request.getCookies()).thenReturn(cookies);
+        when(request.getInputStream()).thenReturn(new ServletInputStreamFake(""));
+        when(validadorMock.validarFuncionario(cookies)).thenReturn(false);
+
+        new SalvarIngredienteTestavel().processRequest(request, response);
+
+        assertTrue(respostaHttp.toString().contains("erro"));
+    }
+
+    @Test
+    public void cookieValidoDeveSalvarIngrediente() throws Exception {
+        Cookie[] cookies = { new Cookie("tokenFuncionario", "ok") };
+
+        String json = "{\"nome\":\"Queijo\",\"descricao\":\"Teste\",\"quantidade\":10,\"ValorCompra\":2,\"ValorVenda\":5,\"tipo\":\"extra\"}";
+
+        when(request.getCookies()).thenReturn(cookies);
+        when(request.getInputStream()).thenReturn(new ServletInputStreamFake(json));
+        when(validadorMock.validarFuncionario(cookies)).thenReturn(true);
+
+        new SalvarIngredienteTestavel().processRequest(request, response);
+
+        assertTrue(respostaHttp.toString().contains("Ingrediente Salvo"));
+    }
+}
