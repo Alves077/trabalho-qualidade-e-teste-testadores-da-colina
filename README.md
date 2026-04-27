@@ -1,3 +1,7 @@
+# Plano de Testes
+
+https://docs.google.com/document/d/1sJ6BjGiADJPM8KH4UFqo3KPaeLkM1Vod_awEb3Hu6Bg/edit?usp=sharing
+
 # APS-04-Lanchonete-Online-em-Java
 
 ## Sobre
